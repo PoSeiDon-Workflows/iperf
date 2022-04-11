@@ -58,7 +58,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
     int i, s;
 #if defined(HAVE_TCP_CONGESTION)
     int saved_errno;
-    static int sender_id = 0; /* use this to set congestion control based on even or odd */
+    static int sender_id = 0; /* use this to set congestion control based on number of streams */
 #endif /* HAVE_TCP_CONGESTION */
     struct iperf_stream *sp;
 
@@ -74,7 +74,7 @@ iperf_create_streams(struct iperf_test *test, int sender)
 #if defined(HAVE_TCP_CONGESTION)
 	if (test->protocol->id == Ptcp) {
 	    if (test->congestion) {
-                if(sender_id % 2 == 0) { /* CC testing hack: only do this for even numbered senders */
+                if(sender_id < test->congestion_split) { /* CC testing hack: only do this for even numbered senders */
 	            /*
 	            printf("setting cong cntrl on stream %d to %s \n",sender_id,test->congestion);
 		    */

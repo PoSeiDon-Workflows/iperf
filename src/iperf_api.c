@@ -979,6 +979,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_TCP_CONGESTION)
         {"congestion", required_argument, NULL, 'C'},
         {"linux-congestion", required_argument, NULL, 'C'},
+        {"congestion-split", required_argument, NULL, 'OPT_CONGESTION_SPLIT'},
 #endif /* HAVE_TCP_CONGESTION */
 #if defined(HAVE_SCTP_H)
         {"sctp", no_argument, NULL, OPT_SCTP},
@@ -1381,6 +1382,15 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		return -1;
 #endif /* HAVE_TCP_CONGESTION */
 		break;
+	    case OPT_CONGESTION_SPLIT:
+#if defined(HAVE_TCP_CONGESTION)
+		test->congestion_split = strdup(optarg);
+		client_flag = 1;
+#else /* HAVE_TCP_CONGESTION */
+		i_errno = IEUNIMP;
+		return -1;
+#endif /* HAVE_TCP_CONGESTION */
+    break;
 	    case 'd':
 		test->debug = 1;
 		break;
@@ -2040,6 +2050,8 @@ send_parameters(struct iperf_test *test)
 	    cJSON_AddStringToObject(j, "extra_data", test->extra_data);
 	if (test->congestion)
 	    cJSON_AddStringToObject(j, "congestion", test->congestion);
+	if (test->congestion_split)
+	    cJSON_AddNumberToObject(j, "congestion_split", test->congestion_split);
 	if (test->congestion_used)
 	    cJSON_AddStringToObject(j, "congestion_used", test->congestion_used);
 	if (test->get_server_output)
@@ -2152,6 +2164,8 @@ get_parameters(struct iperf_test *test)
 	    test->extra_data = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "congestion")) != NULL)
 	    test->congestion = strdup(j_p->valuestring);
+	if ((j_p = cJSON_GetObjectItem(j, "congestion_split")) != NULL)
+	    test->congestion_split = j_p->valueint;
 	if ((j_p = cJSON_GetObjectItem(j, "congestion_used")) != NULL)
 	    test->congestion_used = strdup(j_p->valuestring);
 	if ((j_p = cJSON_GetObjectItem(j, "get_server_output")) != NULL)
@@ -2646,6 +2660,7 @@ iperf_defaults(struct iperf_test *testp)
     testp->title = NULL;
     testp->extra_data = NULL;
     testp->congestion = NULL;
+    testp->congestion_split = 0;
     testp->congestion_used = NULL;
     testp->remote_congestion_used = NULL;
     testp->server_port = PORT;
@@ -3620,7 +3635,7 @@ iperf_print_results(struct iperf_test *test)
                     bandwidth = (double) bytes_received / (double) receiver_time;
                 }
                 else {
-                    bandwidth = 0.0;
+                    bandwidth = 1.0;
                 }
                 unit_snprintf(nbuf, UNIT_LEN, bandwidth, test->settings->unit_format);
                 if (test->protocol->id == Ptcp || test->protocol->id == Psctp) {
