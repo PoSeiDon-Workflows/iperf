@@ -979,7 +979,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 #if defined(HAVE_TCP_CONGESTION)
         {"congestion", required_argument, NULL, 'C'},
         {"linux-congestion", required_argument, NULL, 'C'},
-        {"congestion-split", required_argument, NULL, 'OPT_CONGESTION_SPLIT'},
+        {"congestion-split", required_argument, NULL, OPT_CONGESTION_SPLIT},
 #endif /* HAVE_TCP_CONGESTION */
 #if defined(HAVE_SCTP_H)
         {"sctp", no_argument, NULL, OPT_SCTP},
@@ -1384,7 +1384,7 @@ iperf_parse_arguments(struct iperf_test *test, int argc, char **argv)
 		break;
 	    case OPT_CONGESTION_SPLIT:
 #if defined(HAVE_TCP_CONGESTION)
-		test->congestion_split = strdup(optarg);
+		test->congestion_split = atoi(optarg);
 		client_flag = 1;
 #else /* HAVE_TCP_CONGESTION */
 		i_errno = IEUNIMP;
